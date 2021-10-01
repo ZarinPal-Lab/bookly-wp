@@ -20,7 +20,7 @@ use BooklyPro\Lib;
             <div class="bookly-zarin">
                 <div class="bookly-zarin-ec">
                     <?php Inputs::renderText('bookly_pmt_zarin_merchantid', __('API Marchant ID', 'bookly')) ?>
-
+                  
                 </div>
             </div>
         </div>

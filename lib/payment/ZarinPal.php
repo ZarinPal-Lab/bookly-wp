@@ -13,7 +13,8 @@ class ZarinPal
     public function sendECRequest($form_id)
     {
         $current_url = \Bookly\Lib\Utils\Common::getCurrentPageURL();
-
+       // $sandbox = get_option("bookly_pmt_zarin_sandbox") == 1;
+       // $curlUrl = "https://www.zarinpal.com/pg/rest/WebGate/PaymentRequest.json";
         $currency = get_option("bookly_pmt_currency");
         $total = 0;
         if ($currency == \Bookly\Lib\Utils\Price::CURRENCY_IR_RIAL) {
@@ -33,35 +34,54 @@ class ZarinPal
             $fullName = $formData["full_name"];
         }
         $fullName = strlen($fullName) != 0 ? $fullName : "بدون نام";
+
         $description = "رزرو وقت ملاقات برای '" . $fullName . "' به شماره تلفن '" . $formData["phone"] . "' و تعداد " . $countOfServices . " سرویس" . " در تاریخ " . $date;
 
+        // $data = ["MerchantID" => get_option("bookly_pmt_zarin_merchantid"), "Amount" => $total, "Description" => $description, "CallbackURL" => add_query_arg(["bookly_action" => "zarin-ec-return", "bookly_fid" => $form_id], $current_url)];
 
-        $phone=$formData["phone"];
-        if($phone == ""){
+        if($currency == \Bookly\Lib\Utils\Price::CURRENCY_IR_RIAL){
+            $data = array("merchant_id" =>  get_option("bookly_pmt_zarin_merchantid"),
+                "amount" => $total,
+                "callback_url" => add_query_arg(["bookly_action" => "zarin-ec-return", "bookly_fid" => $form_id],$current_url),
+                "description" => $description,
+                "currency"=> "IRR",
+
+            );
+        }else {
 
             $data = array("merchant_id" =>  get_option("bookly_pmt_zarin_merchantid"),
                 "amount" => $total,
                 "callback_url" => add_query_arg(["bookly_action" => "zarin-ec-return", "bookly_fid" => $form_id],$current_url),
                 "description" => $description,
+                "currency"=> "IRT",
 
-            );
-        }else {
-
-            $data = array("merchant_id" => get_option("bookly_pmt_zarin_merchantid"),
-                "amount" => $total,
-                "callback_url" => add_query_arg(["bookly_action" => "zarin-ec-return", "bookly_fid" => $form_id],$current_url),
-                "description" => $description,
-                "metadata" => [ "email" => "0","mobile"=>$phone],
             );
         }
 
 
 
-        $slotReserved = \BooklyPro\Lib\CheckAppointment::SlotIsReserved($cart);
+       // $slotReserved = \BooklyPro\Lib\CheckAppointment::SlotIsReserved($cart);
+        $slotReserved=$this->SlotIsReserved($cart);
+        /*if(isset($cart)==true){
+            $cart ? exit : NULL;
+            $slotReserved = $cart;
+        }*/
         if ($slotReserved !== false && is_string($slotReserved)) {
-            header("Location: " . wp_sanitize_redirect(add_query_arg(["bookly_action" => "zarin-ec-error", "bookly_fid" => $form_id, "error_msg" => urlencode($slotReserved)], $current_url)));
+            header("Location: " . wp_sanitize_redirect(add_query_arg(["bookly_action" => "payir-ec-error", "bookly_fid" => $form_id, "error_msg" => urlencode($slotReserved)], $current_url)));
             exit;
         }
+        //    $jsonData = json_encode($data);
+        // $ch = curl_init($curlUrl);
+        //  curl_setopt($ch, CURLOPT_USERAGENT, "ZarinPal Rest Api v1");
+        // curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+        // curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
+        // curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        // curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json", "Content-Length: " . strlen($jsonData)]);
+        //  $result = curl_exec($ch);
+        //$err = curl_error($ch);
+        // $result = json_decode($result, true);
+        // curl_close($ch);
+
         $jsonData = json_encode($data);
         $ch = curl_init('https://api.zarinpal.com/pg/v4/payment/request.json');
         curl_setopt($ch, CURLOPT_USERAGENT, 'ZarinPal Rest Api v1');
@@ -78,33 +98,69 @@ class ZarinPal
         $result = json_decode($result, true, JSON_PRETTY_PRINT);
         curl_close($ch);
 
+
         if ($err) {
             header("Location: " . wp_sanitize_redirect(add_query_arg(["bookly_action" => "zarin-ec-error", "bookly_fid" => $form_id, "error_msg" => urlencode($this->description_Verification(210))], $current_url)));
             exit;
         }
-        if(empty($result['errors'])){
-            if ($result['data']['code'] == 100) {
-                header("Location: https://www.zarinpal.com/pg/StartPay/" . $result['data']["authority"]);
-                exit;
-            }
-            echo "ERR: " . $result['errors']['code'].$result['errors']['message'];
-            header("Location: " . wp_sanitize_redirect(add_query_arg(["bookly_action" => "zarin-ec-error", "bookly_fid" => $form_id, "error_msg" => urlencode($this->description_Verification($result["Status"]))], $current_url)));
+
+        //  if ($result["Status"] == 100) {
+        //  header("Location: https://www.zarinpal.com/pg/StartPay/" . $result["Authority"]);
+        // exit;
+        //}
+
+        if ($result['data']['code'] == 100) {
+            header("Location: https://www.zarinpal.com/pg/StartPay/" . $result['data']["authority"]);
             exit;
         }
 
+        echo "ERR: " . $result['errors']['code'];
+        header("Location: " . wp_sanitize_redirect(add_query_arg(["bookly_action" => "zarin-ec-error", "bookly_fid" => $form_id, "error_msg" => urlencode($this->description_Verification($result['errors']['code']))], $current_url)));
+        exit;
     }
+    public static function SlotIsReserved($cart)
+    {
+        global $wpdb;
+        $cart ? exit : NULL;
+        return $cart;
+    }
+    public static function InsertSlotReserved($sessionId, $cart = NULL)
+    {
+        global $wpdb;
+        $cart ? exit : NULL;
+    }
+    public static function deleteReserved($sessionID, $cart)
+    {
+        global $wpdb;
+        $cart ? exit : NULL;
+        return $cart;
+    }
+
     public function sendNvpRequest($method, $data)
     {
+        //$sandbox = get_option("bookly_pmt_zarin_sandbox") == 1;
+        //$curlUrl = "https://www.zarinpal.com/pg/rest/WebGate/PaymentVerification.json";
 
-        $ZarinpalResponse = ["code" => -1, "msg" => $this->description_Verification(0), "refid" => ""];
-
+        $PayPalResponse = ["code" => -1, "msg" => $this->description_Verification(0), "refid" => ""];
         if (isset($_GET["Authority"]) && isset($_GET["Status"]) && $_GET["Status"] == "OK") {
-
-          $refID = $_GET["Authority"];
+            $orderid = $refID = $_GET["Authority"];
 
             $amountTotal = \Bookly\Lib\Session::getFormVar($method, "zarin_amount_total");
 
+            //   $data = ["MerchantID" => get_option("bookly_pmt_zarin_merchantid"), "Authority" => $refID, "Amount" => $amountTotal];
 
+
+            //     $jsonData = json_encode($data);
+
+            //  $ch = curl_init("https://www.zarinpal.com/pg/rest/WebGate/PaymentVerification.json");
+            //  curl_setopt($ch, CURLOPT_USERAGENT, "ZarinPal Rest Api v1");
+            // curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+            // curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
+            //  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            //  curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json", "Content-Length: " . strlen($jsonData)]);
+            // $result = curl_exec($ch);
+            //  $err = curl_error($ch);
+            //  curl_close($ch);
 
             $data = array("merchant_id" => get_option("bookly_pmt_zarin_merchantid"), "authority" => $refID, "amount" => $amountTotal);
 
@@ -125,19 +181,15 @@ class ZarinPal
             $result = json_decode($result, true);
             $err = curl_error($ch);
 
-
             if ($err) {
-                $ZarinpalResponse = ["code" => 500, "msg" => $this->description_Verification(500), "refid" => $refID];
-            } else if ($result['data']['code'] == 100){
-                $ZarinpalResponse = ["code" => $result['data']['ref_id'], "msg" => $this->description_Verification($result['data']['ref_id']), "refid" => $result['data']['ref_id']];
-            }else {
-                $ZarinpalResponse = ["code" => $result['errors']['code'], "msg" => $this->description_Verification($result['errors']['code']), "refid" => $result['errors']['code']];
-
+                $PayPalResponse = ["code" => 210, "msg" => $this->description_Verification(210), "refid" => $refID];
+            } else if($result['data']['code'] == 100) {
+                $PayPalResponse = ["code" => $result['data']['code'], "msg" => $this->description_Verification($result['data']['code']), "refid" => $result['data']['ref_id']];
             }
         }
         $cartData = \Bookly\Lib\Session::getFormVar($method, "cart");
         \BooklyPro\Lib\CheckAppointment::deleteReserved($method, $cartData);
-        return $ZarinpalResponse;
+        return $PayPalResponse;
     }
     public static function renderECForm($form_id)
     {
@@ -157,20 +209,20 @@ class ZarinPal
     {
         intval($code);
         switch (intval($code)) {
-            case -9:
-                return "اطلاعات ارسال شده خالی یا ناقص است";
+            case -1:
+                return "اطلاعات ارسالی ناقص می باشد (کد -1)";
                 break;
-            case -10:
-                return "محدودیت آیپی وجود دارد";
+            case -2:
+                return "وب سرویس مورد نظر معتبر نمی باشد (کد -2)";
                 break;
-            case -11:
-                return "مرچنت کد فعال نیست";
+            case -3:
+                return "حداقل مبلغ پرداختی درگاه پرداخت 100 تومان می باشد (کد -3)";
                 break;
-            case -12:
-                return "تعداد درخواست در بازه زمانی بیش از حد مجاز است";
+            case -4:
+                return "فروشنده متقاضی پرداخت معتبر نمی باشد (کد -4)";
                 break;
             default:
-                return "در حال انتقال";
+                return "سیستم در حال انتقال به سیستم مورد نظر می باشد، لطفا صبر کنید (کد 1)";
         }
     }
     public function description_Verification($code)
@@ -178,35 +230,53 @@ class ZarinPal
         intval($code);
         switch (intval($code)) {
             case 101:
-                return "تراکنش موفق است ";
-                break;
             case 100:
-                return "تراکنش موفق است ";
+                return "پرداخت با موفقیت انجام پذیرفت (کد 1)";
                 break;
-            case -9:
-                return "اطلاعات ارسال شده خالی یا ناقص است";
+            case -1:
+                return "اطلاعات ارسالی ناقص می باشد (کد -1)";
                 break;
-            case -10:
-                return "محدودیت آیپی وجود دارد";
+            case -2:
+                return "و يا مرچنت كد پذيرنده صحيح نيست. IP";
+                break;
+            case -3:
+                return "با توجه به محدوديت هاي شاپرك امكان پرداخت با رقم درخواست شده ميسر نمي باشد.";
+                break;
+            case -4:
+                return "سطح تاييد پذيرنده پايين تر از سطح نقره اي است.";
                 break;
             case -11:
-                return "مرچنت کد فعال نیست";
+                return "درخواست مورد نظر يافت نشد.";
                 break;
             case -12:
-                return "تعداد درخواست در بازه زمانی بیش از حد مجاز است";
+                return "امكان ويرايش درخواست ميسر نمي باشد.";
                 break;
-            case -50:
-                return "مبلغ ارسال شده با مبلغ وریفای متفاوت است ";
+            case -21:
+                return "هيچ نوع عمليات مالي براي اين تراكنش يافت نشد.";
                 break;
-            case -51:
-                return "تراکنش ناموفق است";
+            case -22:
+                return "تراكنش نا موفق ميباشد.";
                 break;
-
-            case 500:
-                return "مشکلی در اتصال  با وب سرویس زرین پال وجود دارد";
+            case -33:
+                return "رقم تراكنش با رقم پرداخت شده مطابقت ندارد.";
+                break;
+            case -34:
+                return "سقف تقسيم تراكنش از لحاظ تعداد يا رقم عبور نموده است";
+                break;
+            case -40:
+                return "اجازه دسترسي به متد مربوطه وجود ندارد.";
+                break;
+            case -42:
+                return "مدت زمان معتبر طول عمر شناسه پرداخت بايد بين 30 دقيه تا 45 روز مي باشد.";
+                break;
+            case -54:
+                return "درخواست مورد نظر آرشيو شده است.";
+                break;
+            case 210:
+                return "مشکلی در ارتباط با زرین پال به وجود آمده است";
                 break;
             default:
-                return "پرداختی انجام نشده است";
+                return "عملیات پرداخت بطورکامل انجام نشد. (کد 0)";
         }
     }
 }

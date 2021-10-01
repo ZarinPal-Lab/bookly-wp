@@ -248,22 +248,7 @@ class Installer extends Base\Installer
             'bookly_zoom_oauth_client_secret'         => '',
             'bookly_zoom_oauth_token'                 => '',
             //telegram
-            'bookly_telegram_rtltheme_enabled'        => '0',
-            'bookly_telegram_rtltheme_bot_token'      => '',
-            'bookly_telegram_rtltheme_channel_id'     => '',
-            'bookly_telegram_rtltheme_message'        => 'کارمند عزیز، سرکار : {staff_name}.
-
-رزرو جدید برای شما ثبت شد.
-
-سرویس : {service_name}
-
-تاریخ رزرو : {appointment_date}
-زمان رزرو : {appointment_time}
-مشتری : {client_name}
-تلفن مشتری :‌ {client_phone}
-
-لینک برای افزودن به گوگل کلندر : 
-{google_calendar_url}',
+          
 
         );
     }

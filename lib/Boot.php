@@ -70,7 +70,7 @@ class Boot
                         } );
                         add_action( is_network_admin() ? 'network_admin_notices' : 'admin_notices', function () use ( $env ) {
                             if ( $env == Boot::ENV_LEGACY_BOOKLY ) {
-                                printf( '<div class="updated"><h3>%s</h3><p>The plugin has been <strong>deactivated</strong>.</p><p>It seems you have an outdated version of Bookly. We\'ve changed the plugin\'s architecture to improve its quality and stability (read more <a href="https://www.rtl-theme.com/bookly-wordpress-plugin/" target="_blank">here</a>).</p><p>Please update Bookly in Plugins section of your WordPress Dashboard.</p></div>',
+                                printf( '<div class="updated"><h3>%s</h3><p>The plugin has been <strong>deactivated</strong>.</p><p>It seems you have an outdated version of Bookly. We\'ve changed the plugin\'s architecture to improve its quality and stability (read more <a href="https://www.bookly.com" target="_blank">here</a>).</p><p>Please update Bookly in Plugins section of your WordPress Dashboard.</p></div>',
                                     Boot::$plugin_title
                                 );
                             } else {

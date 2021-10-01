@@ -21,7 +21,7 @@ class Controller extends BooklyLib\Base\Component
     {
         $form_id = self::parameter( 'bookly_fid' );
         if ($form_id) {
-
+            //zarinpal object {مشابه پی پال}
             $zarinpal = new ZarinPal();
             $userData = new UserBookingData( $form_id );
 
@@ -36,13 +36,15 @@ class Controller extends BooklyLib\Base\Component
                 $zarinpal->setProduct( $product );
                 $zarinpal->setTotalTax( $cart_info->getGatewayTax() );
 
-
+                // and send the payment request.
                 $zarinpal->sendECRequest( $form_id );
             }
         }
     }
 
-
+    /**
+     * Process Express Checkout return request.
+     */
     public static function ecReturn()
     {
         $form_id = self::parameter( 'bookly_fid' );
@@ -51,7 +53,7 @@ class Controller extends BooklyLib\Base\Component
 
         $response = $ZarinPal->sendNvpRequest($form_id, array());
 
-
+        //بررسی نتیجه پرداخت برگشتی از زرین پال
         if (strtoupper($response['code']) == 100) {
             $payment = new Payment();
             $payment
@@ -102,7 +104,9 @@ class Controller extends BooklyLib\Base\Component
         }
     }
 
-
+    /**
+     * Process Express Checkout cancel request.
+     */
     public static function ecCancel()
     {
         $userData = new UserBookingData(self::Parameter( 'bookly_fid' ));
@@ -112,7 +116,9 @@ class Controller extends BooklyLib\Base\Component
         exit;
     }
 
-
+    /**
+     * Process Express Checkout error request.
+     */
     public static function ecError()
     {
         $userData = new UserBookingData(self::Parameter( 'bookly_fid' ));

@@ -8,6 +8,6 @@ use Bookly\Lib as BooklyLib;
 </div>
 <div class="btn-group-vertical align-left" role="group">
     <button type="button" class="btn btn-link text-success text-left" data-trigger="request_code"><span class="text-success"><i class="fas fa-fw fa-check-circle mr-1"></i><?php esc_html_e( 'I have already made the purchase', 'bookly' ) ?></span></button>
-    <a type="button" class="btn btn-link text-left" href="<?php echo BooklyLib\Utils\Common::prepareUrlReferrers( 'https://www.rtl-theme.com/bookly-wordpress-plugin/', 'grace' ) ?>" target="_blank"><i class="fas fa-fw fa-shopping-cart mr-1"></i><?php esc_html_e( 'I want to make a purchase now', 'bookly' ) ?></a>
+    <a type="button" class="btn btn-link text-left" href="<?php echo BooklyLib\Utils\Common::prepareUrlReferrers( 'https://www.bookly.com/', 'grace' ) ?>" target="_blank"><i class="fas fa-fw fa-shopping-cart mr-1"></i><?php esc_html_e( 'I want to make a purchase now', 'bookly' ) ?></a>
     <button type="button" class="btn btn-link text-warning text-left" data-trigger="temporary-hide"><i class="fas fa-fw fa-times-circle mr-1"></i><?php esc_html_e( 'I will provide license info later', 'bookly' ) ?></button>
 </div>

@@ -18,6 +18,7 @@ class Shared extends Proxy\Shared
         $options_to_save = array_merge( $options_to_save, array_intersect_key( $options, array_flip( array(
             'bookly_l10n_label_pay_paypal',
             'bookly_l10n_label_pay_zarinpal',
+
             'bookly_app_show_birthday',
             'bookly_app_show_address',
             'bookly_l10n_info_address',
@@ -65,7 +66,8 @@ class Shared extends Proxy\Shared
             'logo_url'          => plugins_url( 'frontend/resources/images/zarinpal.png', Plugin::getMainFile() ),
         );
 
-    
+
+
 
 
         return $data;

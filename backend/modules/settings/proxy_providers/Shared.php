@@ -246,6 +246,7 @@ class Shared extends Proxy\Shared
                     'bookly_pmt_zarin_merchantid',
                     'bookly_pmt_zarin_sandbox',
 
+
                 );
                 break;
             case 'purchase_code':
